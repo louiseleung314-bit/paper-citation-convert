@@ -1,0 +1,85 @@
+{
+  "category_titles": {
+    "book": "普通图书：",
+    "proceedings": "论文集：",
+    "thesis": "学位论文：",
+    "monograph_excerpt": "专著中析出文献：",
+    "newspaper": "报纸中析出文献：",
+    "archive": "档案资源：",
+    "journal": "期刊：",
+    "electronic": "电子资源：",
+    "other": "其他类型："
+  },
+  "docx_style": {
+    "font_cn": "宋体",
+    "font_en": "Times New Roman",
+    "font_size_half_points": 24,
+    "line_spacing_twips": 360
+  },
+  "rules": {
+    "strip_page_for_non_excerpt_types": [
+      "M",
+      "C"
+    ],
+    "page_merge_exclude_categories": [
+      "book",
+      "monograph_excerpt"
+    ]
+  },
+  "category_detection": {
+    "type_to_category": {
+      "M": "book",
+      "C": "proceedings",
+      "D": "thesis",
+      "N": "newspaper",
+      "A": "archive",
+      "J": "journal",
+      "EB/OL": "electronic"
+    },
+    "excerpt": {
+      "type": "M",
+      "marker": "//",
+      "category": "monograph_excerpt"
+    },
+    "electronic_keywords": [
+      "/OL"
+    ],
+    "fallback": "other"
+  },
+  "reference_span_patterns": [
+    "^(.+?\\[M\\](?://.+?)?\\.\\s*.+?[,，]\\s*\\d{4}(?:\\s*[:：]\\s*[^.\\[]+)?\\.)",
+    "^(.+?\\[C\\](?://.+?)?\\.\\s*.+?[,，]\\s*\\d{4}(?:\\s*[:：]\\s*[^.\\[]+)?\\.)",
+    "^(.+?\\[D\\]\\.\\s*.+?[,，]\\s*\\d{4}(?:\\s*[:：]\\s*[^.\\[]+)?\\.)",
+    "^(.+?\\[A\\]\\.\\s*.+?[,，]\\s*\\d{4}(?:\\s*[:：]\\s*[^.\\[]+)?\\.)",
+    "^(.+?\\[J\\]\\.\\s*.+?[,，]\\s*\\d{4}[^.]*\\.)",
+    "^(.+?\\[N\\]\\.\\s*.+?\\d{4}-\\d{2}-\\d{2}(?:\\([^)]+\\))?(?:\\s*[:：]\\s*[^.\\s]+)?\\.)",
+    "^(.*?\\[EB/OL\\].*?(?:https?://\\S+))"
+  ],
+  "normalization_rules": [
+    {
+      "name": "book_or_proceedings",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[(?P<type>M|C)\\]\\.\\s*(?P<place>.+?)\\s*[:：]\\s*(?P<publisher>.+?)\\s*[,，]\\s*(?P<year>\\d{4})(?:\\s*[:：]\\s*(?P<pages>[^.\\[]+))?\\.\\s*$",
+      "template": "{author}. {title}[{type}]. {place}: {publisher}, {year}."
+    },
+    {
+      "name": "thesis",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[D\\]\\.\\s*(?P<place>.+?)\\s*[:：]\\s*(?P<publisher>.+?)\\s*[,，]\\s*(?P<year>\\d{4})(?:\\s*[:：]\\s*(?P<pages>[^.\\[]+))?\\.\\s*$",
+      "template": "{author}. {title}[D]. {place}: {publisher}, {year}."
+    },
+    {
+      "name": "archive",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[A\\]\\.\\s*(?P<place>.+?)\\s*[:：]\\s*(?P<publisher>.+?)\\s*[,，]\\s*(?P<year>\\d{4})(?:\\s*[:：]\\s*(?P<pages>[^.\\[]+))?\\.\\s*$",
+      "template": "{author}. {title}[A]. {place}: {publisher}, {year}."
+    },
+    {
+      "name": "newspaper",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[N\\]\\.\\s*(?P<newspaper>.+?)\\s*[,，]\\s*(?P<date>\\d{4}-\\d{2}-\\d{2})(?P<issue>\\([^)]+\\))?\\.\\s*$",
+      "template": "{author}. {title}[N]. {newspaper}, {date}{issue}."
+    },
+    {
+      "name": "journal",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[J\\]\\.\\s*(?P<journal>.+?)\\s*[,，]\\s*(?P<year>\\d{4})\\s*[,，]\\s*(?P<volume_issue>[^:：]+)\\s*[:：]\\s*(?P<pages>[^.]+)\\.\\s*$",
+      "template": "{author}. {title}[J]. {journal}, {year}, {volume_issue}: {pages}."
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "category_titles": {
+    "book": "Books:",
+    "proceedings": "Conference Proceedings:",
+    "thesis": "Theses:",
+    "monograph_excerpt": "Book Chapters:",
+    "newspaper": "Newspaper Articles:",
+    "archive": "Archives:",
+    "journal": "Journal Articles:",
+    "electronic": "Online Resources:",
+    "other": "Others:"
+  },
+  "docx_style": {
+    "font_cn": "宋体",
+    "font_en": "Times New Roman",
+    "font_size_half_points": 24,
+    "line_spacing_twips": 360
+  },
+  "rules": {
+    "strip_page_for_non_excerpt_types": [
+      "M",
+      "C"
+    ],
+    "page_merge_exclude_categories": [
+      "book"
+    ]
+  },
+  "category_detection": {
+    "type_to_category": {
+      "M": "book",
+      "C": "proceedings",
+      "D": "thesis",
+      "N": "newspaper",
+      "A": "archive",
+      "J": "journal",
+      "EB/OL": "electronic"
+    },
+    "excerpt": {
+      "type": "M",
+      "marker": "//",
+      "category": "monograph_excerpt"
+    },
+    "electronic_keywords": [
+      "/OL"
+    ],
+    "fallback": "other"
+  },
+  "reference_span_patterns": [
+    "^(.+?\\[M\\].+\\.)",
+    "^(.+?\\[C\\].+\\.)",
+    "^(.+?\\[D\\].+\\.)",
+    "^(.+?\\[A\\].+\\.)",
+    "^(.+?\\[J\\].+\\.)",
+    "^(.+?\\[N\\].+\\.)",
+    "^(.*?\\[EB/OL\\].*?(?:https?://\\S+))"
+  ],
+  "normalization_rules": [
+    {
+      "name": "book_or_proceedings",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[(?P<type>M|C)\\]\\.\\s*(?P<place>.+?)\\s*[:：]\\s*(?P<publisher>.+?)\\s*[,，]\\s*(?P<year>\\d{4})(?:\\s*[:：]\\s*(?P<pages>[^.\\[]+))?\\.\\s*$",
+      "template": "{author}. {title}[{type}]. {place}: {publisher}, {year}."
+    },
+    {
+      "name": "journal",
+      "regex": "^(?P<author>.+?)\\.\\s*(?P<title>.+?)\\[J\\]\\.\\s*(?P<journal>.+?)\\s*[,，]\\s*(?P<year>\\d{4})\\s*[,，]\\s*(?P<volume_issue>[^:：]+)\\s*[:：]\\s*(?P<pages>[^.]+)\\.\\s*$",
+      "template": "{author}. {title}. {journal} {year}; {volume_issue}:{pages}."
+    }
+  ]
+}
