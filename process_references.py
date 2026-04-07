@@ -91,6 +91,7 @@ DEFAULT_DOCX_STYLE: Dict[str, Any] = {
 DEFAULT_RULES: Dict[str, Any] = {
     "strip_page_for_non_excerpt_types": ["M", "C"],
     "page_merge_exclude_categories": ["book", "monograph_excerpt"],
+    "loose_dedupe_categories": ["book"],
 }
 
 DEFAULT_CATEGORY_DETECTION: Dict[str, Any] = {
@@ -320,6 +321,10 @@ def load_runtime_config(profile_name: str, profile_file: Optional[Path]) -> Runt
             rules["page_merge_exclude_categories"] = as_str_list(
                 raw_rules.get("page_merge_exclude_categories"),
                 DEFAULT_RULES["page_merge_exclude_categories"],
+            )
+            rules["loose_dedupe_categories"] = as_str_list(
+                raw_rules.get("loose_dedupe_categories"),
+                DEFAULT_RULES["loose_dedupe_categories"],
             )
 
         raw_category_detection = raw.get("category_detection")
@@ -687,8 +692,9 @@ def normalize_reference(
 
 
 def dedupe_key(normalized_text: str) -> str:
-    text = unicodedata.normalize("NFKC", normalized_text).casefold()
-    # Keep only letters/numbers so case, spaces, and punctuation style won't affect dedupe.
+    text = unicodedata.normalize("NFKD", normalized_text).casefold()
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    # Keep only letters/numbers so case, spaces, punctuation and accents won't affect dedupe.
     return "".join(ch for ch in text if unicodedata.category(ch)[0] in {"L", "N"})
 
 
@@ -746,9 +752,40 @@ def build_text_with_bounds(info: PageMergeInfo) -> str:
     return f"{prefix}: {page_text}."
 
 
+def build_loose_dedupe_key(
+    normalized_text: str,
+    category: str,
+    rules: Dict[str, Any],
+) -> Optional[str]:
+    loose_categories = set(
+        as_str_list(
+            rules.get("loose_dedupe_categories"),
+            DEFAULT_RULES["loose_dedupe_categories"],
+        )
+    )
+    if category not in loose_categories:
+        return None
+
+    match = BOOK_OR_PROC_RE.match(normalized_text)
+    if not match:
+        return None
+
+    base = "|".join(
+        [
+            match.group("author").strip(),
+            match.group("title").strip(),
+            match.group("type").strip(),
+            match.group("place").strip(),
+            match.group("year").strip(),
+        ]
+    )
+    return dedupe_key(base)
+
+
 def process_references(footnotes: List[str], runtime_cfg: RuntimeConfig) -> List[RefItem]:
     items: List[RefItem] = []
-    seen: Dict[str, int] = {}
+    seen_strict: Dict[str, int] = {}
+    seen_loose: Dict[str, int] = {}
     page_merge_by_item: Dict[int, PageMergeInfo] = {}
 
     for ref in footnotes:
@@ -770,10 +807,18 @@ def process_references(footnotes: List[str], runtime_cfg: RuntimeConfig) -> List
             rules=runtime_cfg.rules,
         )
         key_text = base_text if page_merge else normalized
-        key = dedupe_key(key_text)
+        strict_key = dedupe_key(key_text)
+        loose_key = build_loose_dedupe_key(
+            normalized_text=normalized,
+            category=category,
+            rules=runtime_cfg.rules,
+        )
 
-        if key in seen:
-            existing_idx = seen[key]
+        existing_idx = seen_strict.get(strict_key)
+        if existing_idx is None and loose_key:
+            existing_idx = seen_loose.get(loose_key)
+
+        if existing_idx is not None:
             if page_merge:
                 if existing_idx in page_merge_by_item:
                     old = page_merge_by_item[existing_idx]
@@ -813,7 +858,9 @@ def process_references(footnotes: List[str], runtime_cfg: RuntimeConfig) -> List
             )
         )
         item_idx = len(items) - 1
-        seen[key] = item_idx
+        seen_strict[strict_key] = item_idx
+        if loose_key:
+            seen_loose.setdefault(loose_key, item_idx)
         if page_merge:
             page_merge_by_item[item_idx] = page_merge
     return items

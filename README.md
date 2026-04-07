@@ -136,7 +136,8 @@ python3 process_references.py --profile-file config/profiles/mystyle.json
   // 处理规则
   "rules": {
     "strip_page_for_non_excerpt_types": ["M", "C"],
-    "page_merge_exclude_categories": ["book", "monograph_excerpt"]
+    "page_merge_exclude_categories": ["book", "monograph_excerpt"],
+    "loose_dedupe_categories": ["book"]
   },
   // 文献类型 → 分类映射
   "category_detection": { /* ... */ },
@@ -152,6 +153,23 @@ python3 process_references.py --profile-file config/profiles/mystyle.json
   ]
 }
 ```
+
+字段说明：
+
+- `category_titles`：分类标题
+- `docx_style`：输出字体、字号、行距
+- `rules`：页码剥离、页码合并、宽松去重策略
+- `category_detection`：类型标识到分类映射
+- `reference_span_patterns`：文献主干截取规则
+- `normalization_rules`：核心格式重写规则（`regex + template`）
+
+## 当前默认规则
+
+- 从 `.docx` 提取文献：优先脚注/尾注，缺失时回退到正文段落。
+- `[M]`、`[C]` 非析出文献自动去掉年份后的页码。
+- 去重忽略大小写、空白、标点和重音差异。
+- 对 `loose_dedupe_categories`（默认含 `book`）启用宽松去重：忽略出版者差异，按作者+题名+类型+地点+年份判重。
+- 除 `book`、`monograph_excerpt` 外，若同一文献仅页码不同，则合并为最小-最大页码范围。
 
 ## 全部参数
 

@@ -23,6 +23,9 @@
     ],
     "page_merge_exclude_categories": [
       "book"
+    ],
+    "loose_dedupe_categories": [
+      "book"
     ]
   },
   "category_detection": {
